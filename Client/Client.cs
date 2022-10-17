@@ -7,7 +7,8 @@ namespace projet_gamenet
     {
         public static int dataBufferSize = 4096;
         public int id;
-        public string ip = "127.0.0.1";
+        public static string ip = "127.0.0.1";
+        public static int ServerPort;
         public TCP tcp;
 
         public Client(int _clientId){
@@ -31,7 +32,7 @@ namespace projet_gamenet
                 socket.ReceiveBufferSize = dataBufferSize;
                 socket.SendBufferSize = dataBufferSize;
 
-                socket.BeginConnect(ip, port, ConnectCallback, socket);
+                socket.BeginConnect(Client.ip, Client.ServerPort, ConnectCallback, socket);
                 
             }
 

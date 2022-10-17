@@ -28,13 +28,13 @@ namespace projet_gamenet
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
             Console.WriteLine($"Incoming connection from {_client.Client.RemoteEndPoint}...");
 
-            for (int i = 1; i < MaxPlayers; i++)
+            /*for (int i = 1; i < MaxPlayers; i++)
             {
                 if (clients[i].tcp.socket == null){
                     clients[i].tcp.Connect(_client);
                     return;
                 }
-            }
+            }*/
         }
 
         private static void InitializeServerData(){

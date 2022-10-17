@@ -5,7 +5,8 @@ namespace projet_gamenet{
         static void Main(string[] args){
             Console.Title = "Game Server";
 
-            Server.Start(2, 26950);
+            Client client = new Client(1);
+            client.ConnectToServer();
 
             Console.ReadKey();
         }

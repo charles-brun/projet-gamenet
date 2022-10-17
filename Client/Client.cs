@@ -8,7 +8,7 @@ namespace projet_gamenet
         public static int dataBufferSize = 4096;
         public int id;
         public static string ip = "127.0.0.1";
-        public static int ServerPort;
+        public static int ServerPort = 26950;
         public TCP tcp;
 
         public Client(int _clientId){
@@ -16,9 +16,13 @@ namespace projet_gamenet
             tcp = new TCP(id);
         }
 
+        public void ConnectToServer() {
+            tcp.Connect(tcp.socket);
+        }
+
         public class TCP
         {
-            public TcpClient socket;
+            public TcpClient socket = new TcpClient();
             private readonly int id;
             private NetworkStream stream;
             private byte[] receiveBuffer;
@@ -46,7 +50,7 @@ namespace projet_gamenet
 
                 stream = socket.GetStream();
 
-                //receiveBuffer = new byte[dataBufferSize];
+                receiveBuffer = new byte[dataBufferSize];
 
                 // TODO : send welcome packet
 

@@ -1,13 +1,47 @@
+using System.Net.Sockets;
+using System.Net;
+
 namespace projet_gamenet
 {
     public class Server
     {
-        public static int MaxPlyr;
+        public static int MaxPlayers;
         public static int Port;
+        public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        private static TcpListener tcpListener;
         public static void Start(int _maxPlyr, int _port) {
-            MaxPlyr = _maxPlyr;
-            Port = _maxPlyr;
+            MaxPlayers = _maxPlyr;
+            Port = _port;
             
+            Console.WriteLine("Starting server...");
+            InitializeServerData();
+
+            tcpListener = new TcpListener(IPAddress.Any, Port);
+            tcpListener.Start();
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+
+            Console.WriteLine($"Server started on {Port}.");
+        }
+
+        private static void TCPConnectCallback(IAsyncResult _result){
+            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+            Console.WriteLine($"Incoming connection from {_client.Client.RemoteEndPoint}...");
+
+            for (int i = 1; i < MaxPlayers; i++)
+            {
+                if (clients[i].tcp.socket == null){
+                    clients[i].tcp.Connect(_client);
+                    return;
+                }
+            }
+        }
+
+        private static void InitializeServerData(){
+            for (int i = 1; i < MaxPlayers; i++)
+            {
+                clients.Add(i, new Client(i));
+            }
         }
     }
 }

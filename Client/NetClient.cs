@@ -2,26 +2,21 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Collections.Generic;
 
-namespace GameNetClient
-{
 
-    internal sealed class Program
+namespace GameNetClient {
+    internal sealed class NetClient
     {
         public int myID;
-        private const int Port = 7777;
-        private readonly Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private bool hasLoggedin;
-        //private int dataSent;
+        public const int Port = 7777;
+        public readonly Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        public bool hasLoggedin;
+        //public int dataSent;
 
-        public static void Main()
-        {
-            var client = new Program();
-            client.ConnectToServer();
-            client.Exit();
-        }
+        public bool WaitingSomeData = false;
 
-        private void ConnectToServer()
+        public void ConnectToServer()
         {
             int attempts = 0;
 
@@ -42,12 +37,15 @@ namespace GameNetClient
                     Console.ReadLine();
                 }
             }
-
-            Console.WriteLine("Connected!");
             SendLoginPacket();
+            Console.WriteLine("Connected!");
+            while (WaitingSomeData) {
+
+            }
+            return;
         }
 
-        private void SendLoginPacket()
+        public void SendLoginPacket()
         {
             if (hasLoggedin == false)
             {
@@ -55,24 +53,34 @@ namespace GameNetClient
                 hasLoggedin = true;
             }
 
+            WaitingSomeData = true;
             RequestLoop();
         }
 
-        private void RequestLoop()
+        public void RequestLoop()
         {
-            while (true)
+            
+            new Thread(() => 
             {
-                ReceiveResponse();
-            }
+                Thread.CurrentThread.IsBackground = true; 
+                /* run your code here */ 
+                while (true)
+                {
+                    ReceiveResponse();
+                }
+            }).Start();
+
+
+            
         }
 
-        private void Exit()
+        public void Exit()
         {
             clientSocket.Shutdown(SocketShutdown.Both);
             clientSocket.Close();
         }
 
-        private void SendString(string text)
+        public void SendString(string text)
         {
             byte[] buffer = Encoding.ASCII.GetBytes(text);
             Console.WriteLine("Sent To Server : " + text);
@@ -81,7 +89,7 @@ namespace GameNetClient
             //Console.WriteLine(dataSent);
         }
 
-        private void ReceiveResponse()
+        public void ReceiveResponse()
         {
             var buffer = new byte[2048];
             int received = clientSocket.Receive(buffer, SocketFlags.None);
@@ -101,16 +109,15 @@ namespace GameNetClient
                 myID = int.Parse(idtextf);
 
 
-                Console.WriteLine(text);
+                Console.WriteLine("what's your name ?");
                 string userNameInput = "";
                 while (userNameInput == "" || userNameInput == null)
                 {
                     userNameInput = Console.ReadLine();
                 }
                 SendString("{" + myID + "} is [" + userNameInput + "]");
+                WaitingSomeData = false;
             }
         }
     }
-    
 }
-

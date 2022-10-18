@@ -1,4 +1,4 @@
-﻿using CSharpDiscovery.Examen;
+﻿/*using CSharpDiscovery.Examen;
 
 namespace CSharpDiscovery
 {
@@ -9,4 +9,4 @@ namespace CSharpDiscovery
             Game.GameBegin();
         }
     }
-}
+}*/

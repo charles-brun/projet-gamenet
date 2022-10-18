@@ -79,8 +79,21 @@ namespace Name
             }
             catch (SocketException)
             {
-                Console.WriteLine("Client forcefully disconnected");
+                Console.WriteLine("Client forcefully disconnected " + current.RemoteEndPoint);
+                foreach (var plyr in AllPlayers)
+                {
+                    Console.WriteLine(plyr.Value.PlayerIP + "    " + current.RemoteEndPoint.ToString());
+
+                    if (plyr.Value.PlayerIP == current.RemoteEndPoint.ToString())
+                    {
+                        Console.WriteLine("Plyrs Count1 : " + AllPlayers.Count);
+                        AllPlayers.Remove(plyr.Key);
+                        Console.WriteLine("Plyrs Count2 : " + AllPlayers.Count);
+                        break;
+                    }
+                }
                 current.Close(); // Dont shutdown because the socket may be disposed and its disconnected anyway
+                Console.WriteLine("Plyrs Count3 : " + AllPlayers.Count + " " + (AllPlayers.Count > 0 ? AllPlayers.ElementAt(0).Value.ID : " "));
                 clientSockets.Remove(current);
                 return;
             }
@@ -92,27 +105,22 @@ namespace Name
             if (text.StartsWith("NewUserConnected"))
             {
                 string newuser = text.Replace("newuser:", string.Empty);
-                int nb = 0;
-                if (AllPlayers.Count > 0) {
-                    nb = AllPlayers.Keys.Last();
-                }
-                AllPlayers.Add(nb+1, new Player());
+                int nb = 1;
+                if (AllPlayers.Keys.Contains(1))
+                    nb = 2;
+                Player newPlyrAdded = new Player();
+                newPlyrAdded.PlayerIP = current.RemoteEndPoint.ToString(); 
+                newPlyrAdded.ID = nb;
+                AllPlayers.Add(nb, newPlyrAdded);
 
-                SendString("Your Id : " + (nb+1) + " what's your name ?");
-                Console.WriteLine($"New Client has joined the game ID : {nb+1}");
+                SendString("Your Id : " + (nb) + " what's your name ?");
+                Console.WriteLine($"New Client has joined the game ID : {nb}");
             }
             else if(text.StartsWith("{") && text.EndsWith("]"))
             {
                 string idofPlayertext = text.Substring(1, text.IndexOf("}") -1 );
-                string NameOfNewPlayer = text.Substring(text.IndexOf("[") +1);
-                NameOfNewPlayer = NameOfNewPlayer.Replace("]", "");
                 int idOfNewPlayer = int.Parse(idofPlayertext);
-                if (AllPlayers.ContainsKey(idOfNewPlayer)) {
-
-                    AllPlayers[idOfNewPlayer].ID = idOfNewPlayer;
-                    AllPlayers[idOfNewPlayer].Name = NameOfNewPlayer;
-                    Console.WriteLine($"ID : {idOfNewPlayer} - Name : {NameOfNewPlayer}");
-                }
+                Console.WriteLine($"ID : {idOfNewPlayer} - IP : {current.RemoteEndPoint.ToString()}");
             }
             else
             {
@@ -143,6 +151,6 @@ namespace Name
 }
 
 public class Player {
+    public string PlayerIP = "";
     public int ID;
-    public string Name;
 }

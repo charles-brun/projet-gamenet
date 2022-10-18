@@ -1,47 +1,144 @@
-using System.Net.Sockets;
+using System;
+using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
-namespace projet_gamenet
+internal sealed class Program
 {
-    public class Server
+    private const int BufferSize = 2048;
+    private const int Port = 7777;
+    private readonly List<Socket> clientSockets = new List<Socket>();
+    private readonly byte[] buffer = new byte[BufferSize];
+    //private readonly List<Player> players = new List<Player>();
+    public SortedDictionary<int, Player> AllPlayers = new SortedDictionary<int, Player>();
+    private Socket serverSocket;
+    private Socket current;
+    private int dataSent;
+
+    public static void Main()
     {
-        public static int MaxPlayers;
-        public static int Port;
-        public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
-        private static TcpListener tcpListener;
-        public static void Start(int _maxPlyr, int _port) {
-            MaxPlayers = _maxPlyr;
-            Port = _port;
-            
-            Console.WriteLine("Starting server...");
-            InitializeServerData();
+        var program = new Program();
+        program.SetupServer();
+        Console.ReadLine();
+        program.CloseAllSockets();
+    }
 
-            tcpListener = new TcpListener(IPAddress.Any, Port);
-            tcpListener.Start();
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+    private void SetupServer()
+    {
+        Console.WriteLine("Setting up server...");
+        serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        serverSocket.Bind(new IPEndPoint(IPAddress.Any, Port));
+        serverSocket.Listen(5);
+        serverSocket.BeginAccept(AcceptCallback, null);
+        Console.WriteLine("Server setup complete");
+        Console.WriteLine("Listening on port: " + Port);
+    }
 
-            Console.WriteLine($"Server started on {Port}.");
+    private void CloseAllSockets()
+    {
+        foreach (Socket socket in clientSockets)
+        {
+            socket.Shutdown(SocketShutdown.Both);
+            socket.Close();
         }
 
-        private static void TCPConnectCallback(IAsyncResult _result){
-            TcpClient _client = tcpListener.EndAcceptTcpClient(_result);
-            tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-            Console.WriteLine($"Incoming connection from {_client.Client.RemoteEndPoint}...");
+        serverSocket.Close();
+    }
 
-            /*for (int i = 1; i < MaxPlayers; i++)
-            {
-                if (clients[i].tcp.socket == null){
-                    clients[i].tcp.Connect(_client);
-                    return;
-                }
-            }*/
+    private void AcceptCallback(IAsyncResult AR)
+    {
+        Socket socket;
+
+        try
+        {
+            socket = serverSocket.EndAccept(AR);
+        }
+        catch (ObjectDisposedException) // I cannot seem to avoid this (on exit when properly closing sockets)
+        {
+            return;
         }
 
-        private static void InitializeServerData(){
-            for (int i = 1; i < MaxPlayers; i++)
-            {
-                clients.Add(i, new Client(i));
+        clientSockets.Add(socket);
+        socket.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, ReceiveCallback, socket);
+        Console.WriteLine("Client connected: " + socket.RemoteEndPoint);
+        serverSocket.BeginAccept(AcceptCallback, null);
+    }
+
+    private void ReceiveCallback(IAsyncResult AR)
+    {
+        current = (Socket)AR.AsyncState;
+        int received = 0;
+
+        try
+        {
+            received = current.EndReceive(AR);
+        }
+        catch (SocketException)
+        {
+            Console.WriteLine("Client forcefully disconnected");
+            current.Close(); // Dont shutdown because the socket may be disposed and its disconnected anyway
+            clientSockets.Remove(current);
+            return;
+        }
+
+        byte[] recBuf = new byte[received];
+        Array.Copy(buffer, recBuf, received);
+        string text = Encoding.ASCII.GetString(recBuf);
+
+        if (text.StartsWith("NewUserConnected"))
+        {
+            string newuser = text.Replace("newuser:", string.Empty);
+            int nb = 0;
+            if (AllPlayers.Count > 0) {
+                nb = AllPlayers.Keys.Last();
+            }
+            AllPlayers.Add(nb+1, new Player());
+
+            SendString("Your Id : " + (nb+1) + " what's your name ?");
+            Console.WriteLine($"New Client has joined the game ID : {nb+1}");
+        }
+        else if(text.StartsWith("{") && text.EndsWith("]"))
+        {
+            string idofPlayertext = text.Substring(1, text.IndexOf("}") -1 );
+            string NameOfNewPlayer = text.Substring(text.IndexOf("["));
+
+            Console.WriteLine(idofPlayertext);
+            Console.WriteLine(NameOfNewPlayer);
+            int idOfNewPlayer = int.Parse(idofPlayertext);
+            if (AllPlayers.ContainsKey(idOfNewPlayer)) {
+
+                AllPlayers[idOfNewPlayer].ID = idOfNewPlayer;
+                AllPlayers[idOfNewPlayer].Name = NameOfNewPlayer;
             }
         }
+        else
+        {
+            // This is where the client text gets mashed together.
+            Console.WriteLine(text);
+        }
+
+        current.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, ReceiveCallback, current);
     }
+
+    private void SendString(string message)
+    {
+        try
+        {
+            byte[] data = Encoding.ASCII.GetBytes(message.ToString());
+            current.Send(data);
+            // current.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, ReceiveCallback, current);
+            dataSent++;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Client disconnected!" + ex.Message);
+        }
+        Console.WriteLine(dataSent);
+    }
+}
+
+public class Player {
+    public int ID;
+    public string Name;
 }

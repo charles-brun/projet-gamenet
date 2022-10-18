@@ -1,82 +1,113 @@
-using System.Net.Sockets;
+using System;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
-namespace projet_gamenet
+internal sealed class Program
 {
-    public class Client
+    public int myID;
+    private const int Port = 7777;
+    private readonly Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    private bool hasLoggedin;
+    private int dataSent;
+
+    public static void Main()
     {
-        public static int dataBufferSize = 4096;
-        public int id;
-        public static string ip = "127.0.0.1";
-        public static int ServerPort = 26950;
-        public TCP tcp;
+        var client = new Program();
+        client.ConnectToServer();
+        client.Exit();
+    }
 
-        public Client(int _clientId){
-            id = _clientId;
-            tcp = new TCP(id);
-        }
+    private void ConnectToServer()
+    {
+        int attempts = 0;
 
-        public void ConnectToServer() {
-            tcp.Connect(tcp.socket);
-        }
-
-        public class TCP
+        while (!clientSocket.Connected)
         {
-            public TcpClient socket = new TcpClient();
-            private readonly int id;
-            private NetworkStream stream;
-            private byte[] receiveBuffer;
-
-            public TCP(int _id){
-                id = _id;
-            }
-
-            public void Connect(TcpClient _socket){
-                socket = _socket;
-                socket.ReceiveBufferSize = dataBufferSize;
-                socket.SendBufferSize = dataBufferSize;
-
-                socket.BeginConnect(Client.ip, Client.ServerPort, ConnectCallback, socket);
-                
-            }
-
-            private void ConnectCallback(IAsyncResult _result)
+            try
             {
-                socket.EndConnect(_result);
-                if (!socket.Connected)
-                {
-                    return;
-                }
-
-                stream = socket.GetStream();
-
-                receiveBuffer = new byte[dataBufferSize];
-
-                // TODO : send welcome packet
-
-                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
+                attempts++;
+                string ip = "127.0.0.1";
+                Console.WriteLine("Port[default]: " + Port);
+                Console.WriteLine("Connection attempt to " + ip + ": " + attempts + " attempts");
+                var address = IPAddress.Parse(ip);
+                clientSocket.Connect(address, Port);
             }
-
-            private void ReceiveCallback(IAsyncResult _result){
-                try
-                {
-                    int _byteLength = stream.EndRead(_result);
-                    if (_byteLength <= 0){
-                        // TODO : Disconnect
-                        return;
-                    }
-                    byte[] _data = new byte[_byteLength];
-                    Array.Copy(receiveBuffer, _data, _byteLength);
-
-                    // TODO : handle data
-                    stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
-                }
-                catch (Exception _ex)
-                {
-                    Console.WriteLine($"Error receiving TCP data : {_ex}");
-                    // TODO : Disconnect
-                }
+            catch (SocketException e)
+            {
+                Console.Clear();
+                Console.WriteLine(e.Message);
+                Console.ReadLine();
             }
         }
+
+        Console.WriteLine("Connected!");
+        SendLoginPacket();
+    }
+
+    private void SendLoginPacket()
+    {
+        if (hasLoggedin == false)
+        {
+            SendString("NewUserConnected");
+            hasLoggedin = true;
+        }
+
+        RequestLoop();
+    }
+
+    private void RequestLoop()
+    {
+        while (true)
+        {
+            ReceiveResponse();
+        }
+    }
+
+    private void Exit()
+    {
+        clientSocket.Shutdown(SocketShutdown.Both);
+        clientSocket.Close();
+    }
+
+    private void SendString(string text)
+    {
+        byte[] buffer = Encoding.ASCII.GetBytes(text);
+        Console.WriteLine("Sent: " + text);
+        clientSocket.Send(buffer, 0, buffer.Length, SocketFlags.None);
+        dataSent++;
+        Console.WriteLine(dataSent);
+    }
+
+    private void ReceiveResponse()
+    {
+        var buffer = new byte[2048];
+        int received = clientSocket.Receive(buffer, SocketFlags.None);
+        if (received == 0)
+        {
+            return;
+        }
+
+        var data = new byte[received];
+        Array.Copy(buffer, data, received);
+        string text = Encoding.ASCII.GetString(data);
+
+        if (text.Contains("Your Id :"))
+        {
+            string idtextf = text.Replace("Your Id : ", "");
+            idtextf = idtextf.Replace(" what's your name ?", "");
+            myID = int.Parse(idtextf);
+
+
+            Console.WriteLine(text);
+            string userNameInput = "";
+            while (userNameInput == "" || userNameInput == null)
+            {
+                userNameInput = Console.ReadLine();
+            }
+            SendString("{" + myID + "} is [" + userNameInput + "]");
+        }
+
+        Console.WriteLine("Clients connected.");
     }
 }

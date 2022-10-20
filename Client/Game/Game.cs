@@ -25,11 +25,14 @@ namespace GameNetClient
 
 
             Console.WriteLine("THE GAME BEGIN");
+
+
+
             Console.WriteLine("WHAT IS YOUR NAME PLAYER ONE?");
             plyrOneName = GetName();
             
-            Console.WriteLine("WHAT IS YOUR NAME PLAYER TWO?");
-            plyrTwoName = GetName();
+            /*Console.WriteLine("WHAT IS YOUR NAME PLAYER TWO?");
+            */
 
             // 
             for (int i = 0; i < shieldASCII.Length && i < mageASCII.Length && i < paladinASCII.Length; i++)
@@ -43,6 +46,17 @@ namespace GameNetClient
 
             GameLoop();
             client.Exit();
+        }
+
+        public static void SetName(int PlyrToSet) 
+        {
+            if (plyrToSet == 1) {
+                Console.WriteLine("WHAT IS YOUR NAME PLAYER ONE ?");
+                plyrOneName = GetName();
+            } else if (plyrToSet == 2) {
+                Console.WriteLine("WHAT IS YOUR NAME PLAYER TWO ?");
+                plyrTwoName = GetName();
+            }
         }
 
         public static string GetName() 
@@ -225,4 +239,5 @@ namespace GameNetClient
             }
         }
     }
+    
 }

@@ -14,6 +14,8 @@ namespace GameNetClient {
         public bool hasLoggedin;
         //public int dataSent;
 
+        public static Dictionary<choseafaire, byte> Actions = new Dictionary<choseafaire, byte>();
+
         public bool WaitingSomeData = false;
 
         public void ConnectToServer()
@@ -39,9 +41,9 @@ namespace GameNetClient {
             }
             SendLoginPacket();
             Console.WriteLine("Connected!");
-            while (WaitingSomeData) {
-
-            }
+            
+            
+            WaitingForData();
             return;
         }
 
@@ -57,13 +59,18 @@ namespace GameNetClient {
             RequestLoop();
         }
 
+        public void WaitingForData() {
+            while (WaitingSomeData) {
+
+            }
+        }
+
         public void RequestLoop()
         {
             
             new Thread(() => 
             {
                 Thread.CurrentThread.IsBackground = true; 
-                /* run your code here */ 
                 while (true)
                 {
                     ReceiveResponse();
@@ -99,25 +106,49 @@ namespace GameNetClient {
             }
 
             var data = new byte[received];
+
+
             Array.Copy(buffer, data, received);
+            Console.WriteLine("Length "+data.Length + " bytes");
+            if(data[0] == Actions[choseafaire.Name]) {
+                Console.WriteLine("HEYHEY");
+            }
+
+            switch (data[0])
+            {
+                case Actions[choseafaire.NameOne]:
+                    
+                    Game.SetName(1);
+                    WaitingSomeData = false;
+                    break;
+                case Actions[choseafaire.Name]:
+                    Game.SetName(1);
+                    WaitingSomeData = false;
+                    break;
+                default:
+                    break;
+            }
+            
+
+
             string text = Encoding.ASCII.GetString(data);
 
-            if (text.Contains("Your Id :"))
+
+
+            if (text.StartsWith("WHAT IS YOUR NAME PLAYER "))
             {
-                string idtextf = text.Replace("Your Id : ", "");
-                idtextf = idtextf.Replace(" what's your name ?", "");
-                myID = int.Parse(idtextf);
-
-
-                Console.WriteLine("what's your name ?");
-                string userNameInput = "";
-                while (userNameInput == "" || userNameInput == null)
-                {
-                    userNameInput = Console.ReadLine();
-                }
-                SendString("{" + myID + "} is [" + userNameInput + "]");
-                WaitingSomeData = false;
+                
+                
             }
         }
+
+
+
+
     }
+
+    public enum choseafaire {
+        SetIdToOne = 1,
+        SetIdToTwo = 2,
+    } 
 }

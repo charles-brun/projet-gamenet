@@ -10,6 +10,7 @@ namespace GameNetClient
         {
             public static void Main()
             {
+                NetClient.Actions.Add(choseafaire.Name, 1);
                 Game.GameBegin();
                 
             }

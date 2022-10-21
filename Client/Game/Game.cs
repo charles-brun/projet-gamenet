@@ -10,11 +10,14 @@ namespace GameNetClient
         public static Character PlyrRound = null;
 
         public static int round = 0;
+        public static int PlyrId = 0;
         public static string[] shieldASCII = File.ReadAllLines("Game/shieldimg.txt");
         public static string[] mageASCII = File.ReadAllLines("Game/mageimg.txt");
         public static string[] paladinASCII = File.ReadAllLines("Game/paladinimg.txt");
         public static string plyrOneName = "";
         public static string plyrTwoName = "";
+
+        
 
         public static void GameBegin () {
             
@@ -23,33 +26,25 @@ namespace GameNetClient
 
             //Console.Clear();
 
-
-            Console.WriteLine("THE GAME BEGIN");
-
-
-
-            Console.WriteLine("WHAT IS YOUR NAME PLAYER ONE?");
-            plyrOneName = GetName();
-            
-            /*Console.WriteLine("WHAT IS YOUR NAME PLAYER TWO?");
-            */
-
-            // 
             for (int i = 0; i < shieldASCII.Length && i < mageASCII.Length && i < paladinASCII.Length; i++)
             {
                 Console.WriteLine(shieldASCII[i] + mageASCII[i] + paladinASCII[i]);
             }
             
-            PlayerOne = PlyrChoise(plyrOneName);
-            PlayerTwo = PlyrChoise(plyrTwoName);
+
+            
+            /*PlayerOne = Plyrchoice(plyrOneName);
+            PlayerTwo = Plyrchoice(plyrTwoName);*/
 
 
-            GameLoop();
+            //ConsoleGameLoop();
             client.Exit();
         }
 
-        public static void SetName(int PlyrToSet) 
+        public static void SetName(int plyrToSet) 
         {
+            Console.WriteLine("THE GAME BEGINS");
+
             if (plyrToSet == 1) {
                 Console.WriteLine("WHAT IS YOUR NAME PLAYER ONE ?");
                 plyrOneName = GetName();
@@ -120,11 +115,11 @@ namespace GameNetClient
         }
 
         public static void PlyrChoseMove() {
-            int PlyrInput = choiseOneOrTwo();
+            int PlyrInput = choiceOneOrTwo();
             Console.WriteLine("Your target?");
             Console.WriteLine("1 : PlayerOne");
             Console.WriteLine("2 : PlayerTwo");
-            int CiblePlyr = choiseOneOrTwo();
+            int CiblePlyr = choiceOneOrTwo();
             if (round == 0) 
             {
                 if (PlyrInput == 1) {
@@ -165,7 +160,7 @@ namespace GameNetClient
             }
         }
 
-        public static int choiseOneOrTwo() {
+        public static int choiceOneOrTwo() {
             string PlyrInput = "";
             PlyrInput = Console.ReadLine();
             PlyrInput = PlyrInput != null ? PlyrInput : PlyrInput = "";
@@ -176,11 +171,11 @@ namespace GameNetClient
                 return 2;
             } else {
                 Console.WriteLine("Not valid input, try again");
-                return choiseOneOrTwo();
+                return choiceOneOrTwo();
             }
         }
 
-        public static Character PlyrChoise(string PlyrName) {
+        public static byte PlyrChoice(string PlyrName) {
             Console.WriteLine(PlyrName + " CHOOSE YOUR CHARACTER");
             Console.WriteLine("1 : Warrior");
             Console.WriteLine("2 : Cleric");
@@ -189,20 +184,20 @@ namespace GameNetClient
             plyrInput = Console.ReadLine();
             plyrInput = plyrInput != null ? plyrInput : plyrInput = "";
             if (plyrInput == "1") {
-                Console.WriteLine("Your Choise : Warrior\n"); 
-                return new Warrior(PlyrName, 200);
+                Console.WriteLine("Your choice : Warrior\n"); 
+                return 1;
             }
             else if(plyrInput == "2") {
-                Console.WriteLine("Your Choise : Cleric\n"); 
-                return new Cleric(PlyrName, 200);
+                Console.WriteLine("Your choice : Cleric\n"); 
+                return 2;
             }
             else if(plyrInput == "3") {
-                Console.WriteLine("Your Choise : Paladin\n"); 
-                return new Paladin(PlyrName, 200);
+                Console.WriteLine("Your Choice : Paladin\n"); 
+                return 3;
             }
             else {
                 Console.WriteLine("Not valid input\n");
-                return PlyrChoise(PlyrName);    
+                return PlyrChoice(PlyrName);    
             }
 
         }

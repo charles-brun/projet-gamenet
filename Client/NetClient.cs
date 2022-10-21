@@ -14,9 +14,13 @@ namespace GameNetClient {
         public bool hasLoggedin;
         //public int dataSent;
 
-        public static Dictionary<choseafaire, byte> Actions = new Dictionary<choseafaire, byte>();
+        public static Dictionary<ActionCodes, byte> Actions = new Dictionary<ActionCodes, byte>();
 
         public bool WaitingSomeData = false;
+
+        public byte[] actionSent = new byte[1];
+
+        public List<byte> ActionsQueue = new List<byte>();
 
         public void ConnectToServer()
         {
@@ -106,49 +110,54 @@ namespace GameNetClient {
             }
 
             var data = new byte[received];
-
-
             Array.Copy(buffer, data, received);
-            Console.WriteLine("Length "+data.Length + " bytes");
-            if(data[0] == Actions[choseafaire.Name]) {
-                Console.WriteLine("HEYHEY");
+
+            foreach (var bytou in data)
+            {
+                Console.Write(bytou + " ");
+                
+            }
+            Console.Write("\n");
+            foreach (var oneByte in data) {
+                
+                DoActionFromByte(oneByte);
             }
 
-            switch (data[0])
-            {
-                case Actions[choseafaire.NameOne]:
-                    
-                    Game.SetName(1);
-                    WaitingSomeData = false;
-                    break;
-                case Actions[choseafaire.Name]:
-                    Game.SetName(1);
-                    WaitingSomeData = false;
-                    break;
-                default:
-                    break;
+        }
+
+        public void DoActionFromByte(byte oneByte) {
+            if ( oneByte == Actions[ActionCodes.SetIdToOne]) {
+                myID = 1;
             }
-            
-
-
-            string text = Encoding.ASCII.GetString(data);
-
-
-
-            if (text.StartsWith("WHAT IS YOUR NAME PLAYER "))
-            {
-                
-                
+            if ( oneByte == Actions[ActionCodes.SetIdToTwo]) {
+                myID = 2;
+            }
+            if ( oneByte == Actions[ActionCodes.SetplyrName]) {
+                Game.SetName(myID);
+                WaitingSomeData = false;
+            }
+            if ( oneByte == Actions[ActionCodes.PlyrChoice]) {
+                byte PlyrChosen = Game.PlyrChoice(myID == 1 ? Game.plyrOneName : Game.plyrTwoName);
+                SendByte(new byte[]{PlyrChosen, (byte)myID});
             }
         }
 
+        private void SendByte(byte byby) {
+            actionSent[0] = byby;
+            clientSocket.Send(actionSent);
+            Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
+        }
 
-
-
+        private void SendByte(byte[] byby) {
+            clientSocket.Send(byby);
+            Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
+        }
     }
 
-    public enum choseafaire {
+    public enum ActionCodes {
         SetIdToOne = 1,
         SetIdToTwo = 2,
+        SetplyrName = 3,
+        PlyrChoice = 4,
     } 
 }

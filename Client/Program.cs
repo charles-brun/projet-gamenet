@@ -10,7 +10,11 @@ namespace GameNetClient
         {
             public static void Main()
             {
-                NetClient.Actions.Add(choseafaire.Name, 1);
+                int counter = 1;
+                foreach (ActionCodes oneAction in Enum.GetValues(typeof(ActionCodes)) ) {
+                    NetClient.Actions.Add(oneAction, (byte)counter);
+                    counter++;
+                }
                 Game.GameBegin();
                 
             }

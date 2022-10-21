@@ -3,31 +3,24 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-
-namespace Name
+namespace GameNetServer
 {
 
-    internal sealed class Program
+    public class Server
     {
-        private const int BufferSize = 2048;
-        private const int Port = 7777;
-        private readonly List<Socket> clientSockets = new List<Socket>();
-        private readonly byte[] buffer = new byte[BufferSize];
-        //private readonly List<Player> players = new List<Player>();
-        public SortedDictionary<int, Player> AllPlayers = new SortedDictionary<int, Player>();
-        private Socket serverSocket;
-        private Socket current;
-        //private int dataSent;
+        public const int BufferSize = 2048;
+        public const int Port = 7777;
+        public readonly List<Socket> clientSockets = new List<Socket>();
+        public readonly byte[] buffer = new byte[BufferSize];
+        //public readonly List<Player> players = new List<Player>();
+        public static SortedDictionary<int, Player> AllPlayers = new SortedDictionary<int, Player>();
+        public Socket serverSocket;
+        public Socket current;
+        public byte[] actionsCode = new byte[1];
+        //public int dataSent;
 
-        public static void Main()
-        {
-            var program = new Program();
-            program.SetupServer();
-            Console.ReadLine();
-            program.CloseAllSockets();
-        }
 
-        private void SetupServer()
+        public void SetupServer()
         {
             Console.WriteLine("Setting up server...");
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -38,7 +31,7 @@ namespace Name
             Console.WriteLine("Listening on port: " + Port);
         }
 
-        private void CloseAllSockets()
+        public void CloseAllSockets()
         {
             foreach (Socket socket in clientSockets)
             {
@@ -49,7 +42,7 @@ namespace Name
             serverSocket.Close();
         }
 
-        private void AcceptCallback(IAsyncResult AR)
+        public void AcceptCallback(IAsyncResult AR)
         {
             Socket socket;
 
@@ -68,7 +61,7 @@ namespace Name
             serverSocket.BeginAccept(AcceptCallback, null);
         }
 
-        private void ReceiveCallback(IAsyncResult AR)
+        public void ReceiveCallback(IAsyncResult AR)
         {
             current = (Socket)AR.AsyncState;
             int received = 0;
@@ -86,9 +79,7 @@ namespace Name
 
                     if (plyr.Value.PlayerIP == current.RemoteEndPoint.ToString())
                     {
-                        Console.WriteLine("Plyrs Count1 : " + AllPlayers.Count);
                         AllPlayers.Remove(plyr.Key);
-                        Console.WriteLine("Plyrs Count2 : " + AllPlayers.Count);
                         break;
                     }
                 }
@@ -98,9 +89,20 @@ namespace Name
                 return;
             }
 
-            byte[] recBuf = new byte[received];
-            Array.Copy(buffer, recBuf, received);
-            string text = Encoding.ASCII.GetString(recBuf);
+            byte[] Data = new byte[received];
+            Array.Copy(buffer, Data, received);
+
+
+            if ( Data[0] == 1) {
+                Game.PlyrChoice(Data[0], Data[1]);
+            }
+            if ( Data[0] == 2) {
+                Game.PlyrChoice(Data[0], Data[1]);
+            }
+            if ( Data[0] == 3) {
+                Game.PlyrChoice(Data[0], Data[1]);
+            }
+            string text = Encoding.ASCII.GetString(Data);
 
             if (text.StartsWith("NewUserConnected"))
             {
@@ -112,26 +114,26 @@ namespace Name
                 newPlyrAdded.PlayerIP = current.RemoteEndPoint.ToString(); 
                 newPlyrAdded.ID = nb;
                 AllPlayers.Add(nb, newPlyrAdded);
-
-                SendString("Your Id : " + (nb) + " what's your name ?");
+                SendByte(new byte[]{(byte)nb,3,4});
+                //SendString("WHAT IS YOUR NAME PLAYER " + (nb == 1 ? "ONE ?" : "TWO ?"));
                 Console.WriteLine($"New Client has joined the game ID : {nb}");
-            }
-            else if(text.StartsWith("{") && text.EndsWith("]"))
-            {
-                string idofPlayertext = text.Substring(1, text.IndexOf("}") -1 );
-                int idOfNewPlayer = int.Parse(idofPlayertext);
-                Console.WriteLine($"ID : {idOfNewPlayer} - IP : {current.RemoteEndPoint.ToString()}");
-            }
-            else
-            {
-                // This is where the client text gets mashed together.
-                Console.WriteLine(text);
             }
 
             current.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, ReceiveCallback, current);
         }
 
-        private void SendString(string message)
+        public void SendByte(byte byby) {
+            actionsCode[0] = byby;
+            current.Send(actionsCode);
+            Console.WriteLine($"SENDED : {byby}   " + current.RemoteEndPoint);
+        }
+
+        public void SendByte(byte[] byby) {
+            current.Send(byby);
+            Console.WriteLine($"SENDED : {byby}   " + current.RemoteEndPoint);
+        }
+
+        public void SendString(string message)
         {
             try
             {
@@ -148,6 +150,11 @@ namespace Name
         }
     }
     
+    public enum ActionCodes {
+        ChoosedWarrior = 1,
+        ChoosedCleric = 2,
+        ChoosedPaladin = 3,
+    } 
 }
 
 public class Player {

@@ -115,16 +115,33 @@ namespace GameNetClient {
             foreach (var bytou in data)
             {
                 Console.Write(bytou + " ");
-                
             }
             Console.Write("\n");
-            foreach (var oneByte in data) {
+            
+            
                 
-                DoActionFromByte(oneByte);
+            if (ActionsQueue.Count == 0) {
+                foreach (var oneByte in data) {
+                    ActionsQueue.Add(oneByte);
+                } 
+                try {
+                    PlayForVariable();
+                } catch (Exception ex) {
+                    Console.WriteLine(ex.ToString());
+                }
+            } else {
+                foreach (var oneByte in data) {
+                    ActionsQueue.Add(oneByte);
+                }
             }
-
         }
-
+        public void PlayForVariable() {
+            while (true) {
+                if (ActionsQueue.Count == 0) return;
+                DoActionFromByte(ActionsQueue[0]);
+                ActionsQueue.RemoveAt(0);
+            }
+        }
         public void DoActionFromByte(byte oneByte) {
             if ( oneByte == Actions[ActionCodes.SetIdToOne]) {
                 myID = 1;

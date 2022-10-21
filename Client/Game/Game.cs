@@ -26,10 +26,7 @@ namespace GameNetClient
 
             //Console.Clear();
 
-            for (int i = 0; i < shieldASCII.Length && i < mageASCII.Length && i < paladinASCII.Length; i++)
-            {
-                Console.WriteLine(shieldASCII[i] + mageASCII[i] + paladinASCII[i]);
-            }
+            
             
 
             
@@ -38,6 +35,10 @@ namespace GameNetClient
 
 
             //ConsoleGameLoop();
+            while (true)
+            {
+                
+            }
             client.Exit();
         }
 
@@ -176,6 +177,10 @@ namespace GameNetClient
         }
 
         public static byte PlyrChoice(string PlyrName) {
+            for (int i = 0; i < shieldASCII.Length && i < mageASCII.Length && i < paladinASCII.Length; i++)
+            {
+                Console.WriteLine(shieldASCII[i] + mageASCII[i] + paladinASCII[i]);
+            }
             Console.WriteLine(PlyrName + " CHOOSE YOUR CHARACTER");
             Console.WriteLine("1 : Warrior");
             Console.WriteLine("2 : Cleric");

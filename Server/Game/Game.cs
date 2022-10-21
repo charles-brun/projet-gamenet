@@ -31,7 +31,7 @@ namespace GameNetServer
             }
             
             //server.SendString();
-
+            
             GameLoop();
         }
 

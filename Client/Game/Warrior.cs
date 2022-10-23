@@ -42,6 +42,9 @@ namespace GameNetClient
             DoubleHit(cible);
         }
 
+        public override void SetUniqueValue(byte newValue) {
+            Bravery = newValue == 1 ? true : false;
+        }
     }
 
 }

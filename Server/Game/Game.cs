@@ -94,7 +94,7 @@ namespace GameNetServer
                     Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
                 }
 
-                SendToPlyrCharInfo = new byte[]{5, PlyrOneTypeCharacter, (byte)PlayerOne.MaxHealth, (byte)PlayerOne.Health, PlyrTwoTypeCharacter, (byte)PlayerTwo.MaxHealth, (byte)PlayerTwo.Health};
+                SendToPlyrCharInfo = new byte[]{5, PlyrOneTypeCharacter, (byte)PlayerOne.MaxHealth, (byte)PlayerOne.Health, (byte)PlayerOne.GetUniqueValue() , PlyrTwoTypeCharacter, (byte)PlayerTwo.MaxHealth, (byte)PlayerTwo.Health, (byte)PlayerTwo.GetUniqueValue()};
                 if (round == 1) {
                     server.clientSockets[0].SendTo(SendToPlyrCharInfo, 0, SendToPlyrCharInfo.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
                 } else if (round == 2) {
@@ -107,6 +107,14 @@ namespace GameNetServer
                 }
 
                 PlyrChoseMove();
+
+                SendToPlyrCharInfo = new byte[]{6, PlyrOneTypeCharacter, (byte)PlayerOne.MaxHealth, (byte)PlayerOne.Health, (byte)PlayerOne.GetUniqueValue() , PlyrTwoTypeCharacter, (byte)PlayerTwo.MaxHealth, (byte)PlayerTwo.Health, (byte)PlayerTwo.GetUniqueValue()};
+                if (round == 1) {
+                    server.clientSockets[0].SendTo(SendToPlyrCharInfo, 0, SendToPlyrCharInfo.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
+                } else if (round == 2) {
+                    server.clientSockets[1].SendTo(SendToPlyrCharInfo, 0, SendToPlyrCharInfo.Length, SocketFlags.None, server.clientSockets[1].LocalEndPoint);
+                    
+                }
 
                 if (round == 1) 
                 { 

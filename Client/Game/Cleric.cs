@@ -40,6 +40,11 @@ namespace GameNetClient
             Mana -= 80;
             if (Mana < 0) Mana = 0;
         }
+
+        public override void SetUniqueValue(byte newValue) {
+            Mana = (float)((int)newValue);
+        }
+
     }
 
 }

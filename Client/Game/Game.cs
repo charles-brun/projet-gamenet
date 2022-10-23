@@ -255,7 +255,7 @@ namespace GameNetClient
         }
 
 
-        public static void DisplayPlyrFromByteInfo(byte[] byteInfo) {
+        public static void UpdatePlyrsFromServer(byte[] byteInfo) {
             // PTD = Player to display
             
             if (byteInfo[0] == 1) {
@@ -268,19 +268,19 @@ namespace GameNetClient
                 PlayerOne = new Paladin(plyrOneName, (int)byteInfo[1]);
             }
             PlayerOne.TakeDamage((int)(byteInfo[1] - byteInfo[2]));
-            
+            PlayerOne.SetUniqueValue(byteInfo[3]);
 
-            if (byteInfo[3] == 1) {
-                PlayerTwo = new Warrior(plyrTwoName, (int)byteInfo[4]);
+            if (byteInfo[4] == 1) {
+                PlayerTwo = new Warrior(plyrTwoName, (int)byteInfo[5]);
             }
-            if (byteInfo[3] == 2) {
-                PlayerTwo = new Cleric(plyrTwoName, (int)byteInfo[4]);
+            if (byteInfo[4] == 2) {
+                PlayerTwo = new Cleric(plyrTwoName, (int)byteInfo[5]);
             }
-            if (byteInfo[3] == 3) {
-                PlayerTwo = new Paladin(plyrTwoName, (int)byteInfo[4]);
+            if (byteInfo[4] == 3) {
+                PlayerTwo = new Paladin(plyrTwoName, (int)byteInfo[5]);
             }
-            PlayerTwo.TakeDamage((int)(byteInfo[4] - byteInfo[5]));
-            
+            PlayerTwo.TakeDamage((int)(byteInfo[5] - byteInfo[6]));
+            PlayerTwo.SetUniqueValue(byteInfo[7]);
         }
 
 

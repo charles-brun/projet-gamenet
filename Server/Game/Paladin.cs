@@ -56,5 +56,9 @@ namespace GameNetServer
             DoubleHit(cible);
         }
 
+        public override int GetUniqueValue() {
+            return Buff;
+        }
+
     }
 }

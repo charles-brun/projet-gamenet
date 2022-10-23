@@ -37,5 +37,7 @@ namespace GameNetServer
         public abstract void CibledSpecial(Character cible);
 
         public abstract void AlternatifAtk(Character cible);
+
+        public abstract int GetUniqueValue();
     }
 }

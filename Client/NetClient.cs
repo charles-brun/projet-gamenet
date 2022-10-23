@@ -95,7 +95,7 @@ namespace GameNetClient {
         public void SendString(string text)
         {
             byte[] buffer = Encoding.ASCII.GetBytes(text);
-            Console.WriteLine("Sent To Server : " + text);
+            //Console.WriteLine("Sent To Server : " + text);
             clientSocket.Send(buffer, 0, buffer.Length, SocketFlags.None);
             //dataSent++;
             //Console.WriteLine(dataSent);
@@ -113,11 +113,11 @@ namespace GameNetClient {
             var data = new byte[received];
             Array.Copy(buffer, data, received);
 
-            foreach (var bytou in data)
+            /*foreach (var bytou in data)
             {
                 Console.Write(bytou + " ");
             }
-            Console.Write("\n");
+            Console.Write("\n");*/
             
             // Nom du joueur adveresaire
             if (data[0] == 48 && data.Length > 1) {
@@ -134,14 +134,22 @@ namespace GameNetClient {
             
 
             if (data[0] == 5) {
-                Game.DisplayPlyrFromByteInfo(data.Skip(1).ToArray());
-                int PlyrInput = Game.PlyrGetAtkInput((byte)(myID == 1 ? data[1] : data[4]));
+                Game.UpdatePlyrsFromServer(data.Skip(1).ToArray());
+                int PlyrInput = Game.PlyrGetAtkInput((byte)(myID == 1 ? data[1] : data[5]));
                 int CiblePlyr = Game.CibleOfAtkInput();
                 SendByte(new byte[]{4, (byte)PlyrInput, (byte)CiblePlyr});
-                Console.WriteLine("Waiting for " + (myID == 1 ? Game.plyrTwoName : Game.plyrOneName) + " play ...");
+
                 return;
             }
 
+            if (data[0] == 6) {
+                Game.UpdatePlyrsFromServer(data.Skip(1).ToArray());
+                Console.Write("\n");
+                Console.WriteLine(Game.PlayerOne.ToString());
+                Console.WriteLine(Game.PlayerTwo.ToString());
+                Console.WriteLine("Waiting for " + (myID == 1 ? Game.plyrTwoName : Game.plyrOneName) + " play ...");
+                return;
+            }
 
             // ActionsQueue
             if (ActionsQueue.Count == 0) {
@@ -178,7 +186,7 @@ namespace GameNetClient {
                 // Send Name to server
                 byte[] PlyrNameByte = Encoding.ASCII.GetBytes(((byte)0).ToString() + myID.ToString() +(myID == 1 ? Game.plyrOneName : Game.plyrTwoName));
                 clientSocket.Send(PlyrNameByte);
-                Console.WriteLine("Sended Name To Server");
+                //Console.WriteLine("Sended Name To Server");
                 WaitingSomeData = false;
             }
             if ( oneByte == Actions[ActionCodes.PlyrChoice]) {
@@ -202,12 +210,12 @@ namespace GameNetClient {
         private void SendByte(byte byby) {
             actionSent[0] = byby;
             clientSocket.Send(actionSent);
-            Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
+            //Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
         }
 
         private void SendByte(byte[] byby) {
             clientSocket.Send(byby);
-            Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
+            //Console.WriteLine($"SENDED : {byby}   " + clientSocket.RemoteEndPoint);
         }
     }
 
@@ -217,7 +225,7 @@ namespace GameNetClient {
         SetplyrName = 3,
         PlyrChoice = 4,
         PlyrMove = 5,
-        DisplayPlyrInfo = 6,
+        PostAttaqueInfo = 6,
         PlyrOneWinner = 7,
         PlyrTwoWinner = 8,
         DrawMatch = 9,

@@ -42,6 +42,9 @@ namespace GameNetServer
             DoubleHit(cible);
         }
 
+        public override int GetUniqueValue() {
+            return Bravery ? 1 : 0;
+        }
     }
 
 }

@@ -40,6 +40,10 @@ namespace GameNetServer
             Mana -= 80;
             if (Mana < 0) Mana = 0;
         }
+
+        public override int GetUniqueValue() {
+            return (int)Math.Round(Mana);
+        }
     }
 
 }

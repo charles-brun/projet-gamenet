@@ -56,5 +56,9 @@ namespace GameNetClient
             DoubleHit(cible);
         }
 
+        public override void SetUniqueValue(byte newValue) {
+            Buff = (int)newValue;
+        }
+
     }
 }

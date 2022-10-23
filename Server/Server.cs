@@ -49,6 +49,10 @@ namespace GameNetServer
             try
             {
                 socket = serverSocket.EndAccept(AR);
+                if (clientSockets.Count() >= 2){
+                    socket.Close();
+                    return;
+                }
             }
             catch (ObjectDisposedException) // I cannot seem to avoid this (on exit when properly closing sockets)
             {

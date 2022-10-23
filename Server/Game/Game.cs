@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 namespace GameNetServer
 {
@@ -10,7 +13,10 @@ namespace GameNetServer
         public static Character PlayerTwo; 
         public static Character PlyrRound = null;
 
-        public static int round = 0;
+        public static byte PlyrOneTypeCharacter = 0;
+        public static byte PlyrTwoTypeCharacter = 0;
+
+        public static int round = 1;
         public static string[] shieldASCII = File.ReadAllLines("Game/shieldimg.txt");
         public static string[] mageASCII = File.ReadAllLines("Game/mageimg.txt");
         public static string[] paladinASCII = File.ReadAllLines("Game/paladinimg.txt");
@@ -20,117 +26,171 @@ namespace GameNetServer
         public static Server ? server {get; set; }
 
         public static void GameBegin () {
-            
+
+
+            Console.Clear();
+
             server = new Server();
             server.SetupServer();
-            Console.ReadLine();
-            server.CloseAllSockets();
 
-            while (Server.AllPlayers.Count == 2) {
+            while (Server.AllPlayers.Count != 2 || plyrOneName == "" || plyrTwoName == "" || PlayerOne == null || PlayerTwo == null ) {
                 Thread.Sleep(250);
+                //Console.WriteLine("AllPlayers Count : " + Server.AllPlayers.Count + " plyrOneName : " + plyrOneName + " plyrTwoName : " + plyrTwoName);
             }
             
-            //server.SendString();
             
+            Console.WriteLine("Two players Connected GameBegin");
+        
+
+            byte[] P1NByte = Encoding.ASCII.GetBytes(((byte)0).ToString() + plyrOneName);
+            byte[] P2NByte = Encoding.ASCII.GetBytes(((byte)0).ToString() + plyrTwoName);
+
+
+            server.clientSockets[0].SendTo(P2NByte, 0, P2NByte.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
+            server.clientSockets[1].SendTo(P1NByte, 0, P1NByte.Length, SocketFlags.None, server.clientSockets[1].LocalEndPoint);
+
             GameLoop();
+
+
+
         }
 
+        public static byte[] SendToPlyrChoseMove = new byte[] {5};
+        public static byte[] SendToPlyrCharInfo;
+        //public static List<byte> SendToPlyrCharInfoList = new List<byte>();
 
-        public static void GameLoop() {
+        public async static void GameLoop() {
             while (PlayerOne.Health > 0 && PlayerTwo.Health > 0)
             {
                 Console.Clear();
                 Console.WriteLine(PlayerOne.ToString());
                 Console.WriteLine(PlayerTwo.ToString());
 
-                if (round == 0) { 
+                if (round == 1) { 
                     PlayerOne.Special();
                     PlyrRound = PlayerOne;
                     DisplayPlyr(PlayerOne, plyrOneName);
                 } 
-                else if (round == 1) {
+                else if (round == 2) {
                     PlayerTwo.Special();
                     PlyrRound = PlayerTwo;
                     DisplayPlyr(PlayerTwo, plyrTwoName);
                 }
+                byte PlyrRoundType = 0;
                 Console.WriteLine("\n What Do you want to do?");
                 if (PlyrRound is Warrior) {
+                    PlyrRoundType = 1;
                     Console.WriteLine("1 : BaseAttack : 25 damage, if Bravery is active 15 supply damage");
                     Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
                 }
                 if (PlyrRound is Cleric) {
+                    PlyrRoundType = 2;
                     Console.WriteLine("1 : BaseAttack : +15 hp");
                     Console.WriteLine("2 : AlternatifAttack : You will inflict a demage equal to the half of your mana, but -80 of your mana");
                 }
                 if (PlyrRound is Paladin) {
+                    PlyrRoundType = 3;
                     Console.WriteLine("1 : BaseAttack : You will inflict damage equal to 25 + your buff, buff +3 (15 max)");
                     Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
                 }
-                
+
+                SendToPlyrCharInfo = new byte[]{5, PlyrOneTypeCharacter, (byte)PlayerOne.MaxHealth, (byte)PlayerOne.Health, PlyrTwoTypeCharacter, (byte)PlayerTwo.MaxHealth, (byte)PlayerTwo.Health};
+                if (round == 1) {
+                    server.clientSockets[0].SendTo(SendToPlyrCharInfo, 0, SendToPlyrCharInfo.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
+                } else if (round == 2) {
+                    server.clientSockets[1].SendTo(SendToPlyrCharInfo, 0, SendToPlyrCharInfo.Length, SocketFlags.None, server.clientSockets[1].LocalEndPoint);
+                    
+                }
+
+                while (!PlyrHasChoseMove) {
+                    
+                }
+
                 PlyrChoseMove();
 
-                if (round == 0) 
+                if (round == 1) 
                 { 
+                    round = 2;
+                }
+                else if (round == 2) 
+                {
                     round = 1;
                 }
-                else if (round == 1) 
-                {
-                    round = 0;
-                }
+
+                Console.WriteLine(PlayerOne.Health+ " " + PlayerTwo.Health);
             }
+            byte[] sendWinner = new byte[1];
             if (PlayerOne.Health == 0 && PlayerTwo.Health > 0) {
                 Console.WriteLine(plyrTwoName + " WIN!");
+                sendWinner[0] = 8;
             } else if(PlayerOne.Health > 0 && PlayerTwo.Health == 0) {
                 Console.WriteLine(plyrOneName + " WIN!");
+                sendWinner[0] = 7;
             } else if (PlayerOne.Health == 0 && PlayerTwo.Health == 0) {
                 Console.WriteLine("DRAW!");
+                sendWinner[0] = 9;
             }
+            server.clientSockets[0].SendTo(sendWinner, 0, sendWinner.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
+            server.clientSockets[1].SendTo(sendWinner, 0, sendWinner.Length, SocketFlags.None, server.clientSockets[1].LocalEndPoint);
+
+            Console.WriteLine("Fini!");
+            server.CloseAllSockets();
+
         }
 
+        public static int PlyrMoveInput = -1;
+        public static int CibleMovePlyr = -1;
+        public static bool PlyrHasChoseMove = false;
+
         public static void PlyrChoseMove() {
-            int PlyrInput = choiseOneOrTwo();
             Console.WriteLine("Your target?");
             Console.WriteLine("1 : PlayerOne");
             Console.WriteLine("2 : PlayerTwo");
-            int CiblePlyr = choiseOneOrTwo();
-            if (round == 0) 
+
+           
+
+            if (round == 1) 
             {
-                if (PlyrInput == 1) {
-                    if (CiblePlyr == 1) {
+
+                if (PlyrMoveInput == 1) {
+                    if (CibleMovePlyr == 1) {
                         PlayerOne.CibledSpecial(PlayerOne);
                     }
-                    else if(CiblePlyr == 2) {
+                    else if(CibleMovePlyr == 2) {
                         PlayerOne.CibledSpecial(PlayerTwo);
                     }
                 }
-                else if(PlyrInput == 2) {
-                    if (CiblePlyr == 1) {
+                else if(PlyrMoveInput == 2) {
+                    if (CibleMovePlyr == 1) {
                         PlayerOne.AlternatifAtk(PlayerOne);
                     }
-                    else if(CiblePlyr == 2) {
+                    else if(CibleMovePlyr == 2) {
                         PlayerOne.AlternatifAtk(PlayerTwo);
                     }
                 }
 
-            } else if (round == 1) 
+            } else if (round == 2) 
             {
-                if (PlyrInput == 1) {
-                    if (CiblePlyr == 1) {
+                if (PlyrMoveInput == 1) {
+                    if (CibleMovePlyr == 1) {
                         PlayerTwo.CibledSpecial(PlayerOne);
                     }
-                    else if(CiblePlyr == 2) {
+                    else if(CibleMovePlyr == 2) {
                         PlayerTwo.CibledSpecial(PlayerTwo);
                     }
                 }
-                else if(PlyrInput == 2) {
-                    if (CiblePlyr == 1) {
+                else if(PlyrMoveInput == 2) {
+                    if (CibleMovePlyr == 1) {
                         PlayerTwo.AlternatifAtk(PlayerOne);
                     }
-                    else if(CiblePlyr == 2) {
+                    else if(CibleMovePlyr == 2) {
                         PlayerTwo.AlternatifAtk(PlayerTwo);
                     }
                 }
             }
+
+            PlyrHasChoseMove = false;
+            return;
         }
 
         public static int choiseOneOrTwo() {
@@ -153,25 +213,31 @@ namespace GameNetServer
             if (PlyrChosen == 1) {
                 if (plyrID == 1) {
                     PlayerOne = new Warrior(PlyrName, 200);
+                    PlyrOneTypeCharacter = 1;
                 }
                 if (plyrID == 2) {
                     PlayerTwo = new Warrior(PlyrName, 200);
+                    PlyrTwoTypeCharacter = 1;
                 }
             }
             else if(PlyrChosen == 2) {
                 if (plyrID == 1) {
                     PlayerOne = new Cleric(PlyrName, 200);
+                    PlyrOneTypeCharacter = 2;
                 }
                 if (plyrID == 2) {
                     PlayerTwo = new Cleric(PlyrName, 200);
+                    PlyrTwoTypeCharacter = 2;
                 }
             }
             else if(PlyrChosen == 3) {                
                 if (plyrID == 1) {
                     PlayerOne = new Paladin(PlyrName, 200);
+                    PlyrOneTypeCharacter = 3;
                 }
                 if (plyrID == 2) {
                     PlayerTwo = new Paladin(PlyrName, 200);
+                    PlyrTwoTypeCharacter = 3;
                 }
             }
 

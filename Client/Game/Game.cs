@@ -16,15 +16,14 @@ namespace GameNetClient
         public static string[] paladinASCII = File.ReadAllLines("Game/paladinimg.txt");
         public static string plyrOneName = "";
         public static string plyrTwoName = "";
-
         
 
         public static void GameBegin () {
             
+            Console.Clear();
             var client = new NetClient();
             client.ConnectToServer();
 
-            //Console.Clear();
 
             
             
@@ -42,6 +41,12 @@ namespace GameNetClient
             client.Exit();
         }
 
+
+        public static void GameOver (string GameState) {
+
+        }
+
+
         public static void SetName(int plyrToSet) 
         {
             Console.WriteLine("THE GAME BEGINS");
@@ -49,9 +54,11 @@ namespace GameNetClient
             if (plyrToSet == 1) {
                 Console.WriteLine("WHAT IS YOUR NAME PLAYER ONE ?");
                 plyrOneName = GetName();
+                PlyrId = 1;
             } else if (plyrToSet == 2) {
                 Console.WriteLine("WHAT IS YOUR NAME PLAYER TWO ?");
                 plyrTwoName = GetName();
+                PlyrId = 2;
             }
         }
 
@@ -64,7 +71,7 @@ namespace GameNetClient
             } else return GetName();
         }
 
-        public static void GameLoop() {
+        /*public static void GameLoop() {
             while (PlayerOne.Health > 0 && PlayerTwo.Health > 0)
             {
                 Console.Clear();
@@ -113,9 +120,9 @@ namespace GameNetClient
             } else if (PlayerOne.Health == 0 && PlayerTwo.Health == 0) {
                 Console.WriteLine("DRAW!");
             }
-        }
+        }*/
 
-        public static void PlyrChoseMove() {
+        /*public static void PlyrChoseMove() {
             int PlyrInput = choiceOneOrTwo();
             Console.WriteLine("Your target?");
             Console.WriteLine("1 : PlayerOne");
@@ -159,6 +166,33 @@ namespace GameNetClient
                     }
                 }
             }
+        }*/
+
+        public static int PlyrGetAtkInput(byte TypeOfPlyrInput) {
+
+            Console.Clear();
+            Console.WriteLine(PlayerOne.ToString());
+            Console.WriteLine(PlayerTwo.ToString());
+        
+
+            if (PlyrId == 1) {
+                DisplayPlyr(TypeOfPlyrInput, plyrOneName);
+                DisplayAtkChoiseOfCharacter(TypeOfPlyrInput);
+            } else if (PlyrId == 2) {
+                DisplayPlyr(TypeOfPlyrInput, plyrTwoName);
+                DisplayAtkChoiseOfCharacter(TypeOfPlyrInput);
+            }
+            
+            return choiceOneOrTwo();
+        }
+
+
+
+        public static int CibleOfAtkInput() {
+            Console.WriteLine("Your target?");
+            Console.WriteLine("1 : PlayerOne");
+            Console.WriteLine("2 : PlayerTwo");
+            return choiceOneOrTwo();
         }
 
         public static int choiceOneOrTwo() {
@@ -207,18 +241,65 @@ namespace GameNetClient
 
         }
 
-        public static void DisplayPlyr(Character plyrToDisplay, string PlyrName) {
-            if (plyrToDisplay is Warrior) {
+        public static void DisplayPlyr(byte plyrToDisplay, string PlyrName) {
+            if (plyrToDisplay == 1) {
                 Console.WriteLine(PlyrName + '\n');
                 PrintWarrior();
-            } else if (plyrToDisplay is Cleric) {
+            } else if (plyrToDisplay == 2) {
                 Console.WriteLine(PlyrName + '\n');
                 PrintCleric();
-            } else if (plyrToDisplay is Paladin) {
+            } else if (plyrToDisplay == 3) {
                 Console.WriteLine(PlyrName + '\n');
                 PrintPaladin();
             }
         }
+
+
+        public static void DisplayPlyrFromByteInfo(byte[] byteInfo) {
+            // PTD = Player to display
+            
+            if (byteInfo[0] == 1) {
+                PlayerOne = new Warrior(plyrOneName, (int)byteInfo[1]);
+            }
+            if (byteInfo[0] == 2) {
+                PlayerOne = new Cleric(plyrOneName, (int)byteInfo[1]);
+            }
+            if (byteInfo[0] == 3) {
+                PlayerOne = new Paladin(plyrOneName, (int)byteInfo[1]);
+            }
+            PlayerOne.TakeDamage((int)(byteInfo[1] - byteInfo[2]));
+            
+
+            if (byteInfo[3] == 1) {
+                PlayerTwo = new Warrior(plyrTwoName, (int)byteInfo[4]);
+            }
+            if (byteInfo[3] == 2) {
+                PlayerTwo = new Cleric(plyrTwoName, (int)byteInfo[4]);
+            }
+            if (byteInfo[3] == 3) {
+                PlayerTwo = new Paladin(plyrTwoName, (int)byteInfo[4]);
+            }
+            PlayerTwo.TakeDamage((int)(byteInfo[4] - byteInfo[5]));
+            
+        }
+
+
+        public static void DisplayAtkChoiseOfCharacter(byte characterToUse) {
+            Console.WriteLine("\n What Do you want to do?");
+            if (characterToUse == 1) {
+                Console.WriteLine("1 : BaseAttack : 25 damage, if Bravery is active 15 supply damage");
+                Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
+            }
+            if (characterToUse == 2) {
+                Console.WriteLine("1 : BaseAttack : +15 hp");
+                Console.WriteLine("2 : AlternatifAttack : You will inflict a demage equal to the half of your mana, but -80 of your mana");
+            }
+            if (characterToUse == 3) {
+                Console.WriteLine("1 : BaseAttack : You will inflict damage equal to 25 + your buff, buff +3 (15 max)");
+                Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
+            }
+        }
+
 
         public static void PrintWarrior() {
             for (int i = 0; i < shieldASCII.Length; i++)

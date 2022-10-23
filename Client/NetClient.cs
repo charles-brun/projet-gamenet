@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
-
+using System.Linq;
 
 namespace GameNetClient {
     internal sealed class NetClient
@@ -89,6 +89,7 @@ namespace GameNetClient {
         {
             clientSocket.Shutdown(SocketShutdown.Both);
             clientSocket.Close();
+            Environment.Exit(0);
         }
 
         public void SendString(string text)
@@ -118,23 +119,43 @@ namespace GameNetClient {
             }
             Console.Write("\n");
             
+            // Nom du joueur adveresaire
+            if (data[0] == 48 && data.Length > 1) {
+                string text = Encoding.ASCII.GetString(data.Skip(1).Take(data.Length - 1).ToArray());
+                if (Game.plyrOneName == "") {
+                    Game.plyrOneName = text;
+                    Console.WriteLine("Your enemy is : " + Game.plyrOneName);
+                } else if (Game.plyrTwoName == "") {
+                    Game.plyrTwoName = text;
+                    Console.WriteLine("Your enemy is : " + Game.plyrTwoName);
+                }
+                return;
+            }
             
-                
+
+            if (data[0] == 5) {
+                Game.DisplayPlyrFromByteInfo(data.Skip(1).ToArray());
+                int PlyrInput = Game.PlyrGetAtkInput((byte)(myID == 1 ? data[1] : data[4]));
+                int CiblePlyr = Game.CibleOfAtkInput();
+                SendByte(new byte[]{4, (byte)PlyrInput, (byte)CiblePlyr});
+                Console.WriteLine("Waiting for " + (myID == 1 ? Game.plyrTwoName : Game.plyrOneName) + " play ...");
+                return;
+            }
+
+
+            // ActionsQueue
             if (ActionsQueue.Count == 0) {
                 foreach (var oneByte in data) {
                     ActionsQueue.Add(oneByte);
                 } 
-                try {
-                    PlayForVariable();
-                } catch (Exception ex) {
-                    Console.WriteLine(ex.ToString());
-                }
+                PlayForVariable();
             } else {
                 foreach (var oneByte in data) {
                     ActionsQueue.Add(oneByte);
                 }
             }
         }
+
         public void PlayForVariable() {
             while (true) {
                 if (ActionsQueue.Count == 0) return;
@@ -142,6 +163,7 @@ namespace GameNetClient {
                 ActionsQueue.RemoveAt(0);
             }
         }
+        
         public void DoActionFromByte(byte oneByte) {
             if ( oneByte == Actions[ActionCodes.SetIdToOne]) {
                 myID = 1;
@@ -151,11 +173,29 @@ namespace GameNetClient {
             }
             if ( oneByte == Actions[ActionCodes.SetplyrName]) {
                 Game.SetName(myID);
+                
+
+                // Send Name to server
+                byte[] PlyrNameByte = Encoding.ASCII.GetBytes(((byte)0).ToString() + myID.ToString() +(myID == 1 ? Game.plyrOneName : Game.plyrTwoName));
+                clientSocket.Send(PlyrNameByte);
+                Console.WriteLine("Sended Name To Server");
                 WaitingSomeData = false;
             }
             if ( oneByte == Actions[ActionCodes.PlyrChoice]) {
                 byte PlyrChosen = Game.PlyrChoice(myID == 1 ? Game.plyrOneName : Game.plyrTwoName);
                 SendByte(new byte[]{PlyrChosen, (byte)myID});
+            }
+            if ( oneByte == Actions[ActionCodes.PlyrOneWinner]) {
+                Console.WriteLine(Game.plyrOneName + " WIN!");
+                Exit();
+            }
+            if ( oneByte == Actions[ActionCodes.PlyrTwoWinner]) {
+                Console.WriteLine(Game.plyrTwoName + " WIN!");
+                Exit();
+            }
+            if ( oneByte == Actions[ActionCodes.DrawMatch]) {
+                Console.WriteLine("DRAW!");
+                Exit();
             }
         }
 
@@ -176,5 +216,11 @@ namespace GameNetClient {
         SetIdToTwo = 2,
         SetplyrName = 3,
         PlyrChoice = 4,
+        PlyrMove = 5,
+        DisplayPlyrInfo = 6,
+        PlyrOneWinner = 7,
+        PlyrTwoWinner = 8,
+        DrawMatch = 9,
+        GetOtherName = 48,
     } 
 }

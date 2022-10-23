@@ -15,6 +15,7 @@ namespace GameNetClient
                     NetClient.Actions.Add(oneAction, (byte)counter);
                     counter++;
                 }
+                NetClient.Actions[ActionCodes.GetOtherName] = 48;
                 Game.GameBegin();
                 
             }

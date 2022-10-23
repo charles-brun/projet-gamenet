@@ -59,6 +59,7 @@ namespace GameNetServer
             socket.BeginReceive(buffer, 0, BufferSize, SocketFlags.None, ReceiveCallback, socket);
             Console.WriteLine("Client connected: " + socket.RemoteEndPoint);
             serverSocket.BeginAccept(AcceptCallback, null);
+            
         }
 
         public void ReceiveCallback(IAsyncResult AR)
@@ -79,6 +80,12 @@ namespace GameNetServer
 
                     if (plyr.Value.PlayerIP == current.RemoteEndPoint.ToString())
                     {
+                        if (plyr.Value.ID == 1) {
+                            Game.plyrOneName = "";
+                        }
+                        if (plyr.Value.ID == 2) {
+                            Game.plyrOneName = "";
+                        }
                         AllPlayers.Remove(plyr.Key);
                         break;
                     }
@@ -92,6 +99,12 @@ namespace GameNetServer
             byte[] Data = new byte[received];
             Array.Copy(buffer, Data, received);
 
+            Console.Write("Received Data ");
+            foreach (var someData in Data)
+            {
+                Console.Write(someData + " ");
+            }
+            Console.Write("\n");
 
             if ( Data[0] == 1) {
                 Game.PlyrChoice(Data[0], Data[1]);
@@ -102,6 +115,31 @@ namespace GameNetServer
             if ( Data[0] == 3) {
                 Game.PlyrChoice(Data[0], Data[1]);
             }
+            if ( Data[0] == 4) {
+                if (Data[1] == 1) {
+                    Game.PlyrMoveInput = 1;
+                } else if (Data[1] == 2) {
+                    Game.PlyrMoveInput = 2;
+                }
+                if (Data[2] == 1) {
+                    Game.CibleMovePlyr = 1;
+                } else if (Data[2] == 2) {
+                    Game.CibleMovePlyr = 2;
+                }
+                Game.PlyrHasChoseMove = true;
+            }
+
+            if (Data[0] == 48) {
+                string newPlyrName = Encoding.ASCII.GetString(Data.Skip(2).Take(Data.Length - 2).ToArray());
+                int idOfPlyrWhoSend = ((int)Data[1] - 48 );
+                Console.WriteLine("Plyr ID : " + idOfPlyrWhoSend + " To Name : " +newPlyrName);
+                if (idOfPlyrWhoSend == 1) {
+                    Game.plyrOneName = newPlyrName;
+                } else if( idOfPlyrWhoSend == 2) {
+                    Game.plyrTwoName = newPlyrName;
+                }
+            }
+
             string text = Encoding.ASCII.GetString(Data);
 
             if (text.StartsWith("NewUserConnected"))
@@ -154,6 +192,7 @@ namespace GameNetServer
         ChoosedWarrior = 1,
         ChoosedCleric = 2,
         ChoosedPaladin = 3,
+        PlyrMove = 4,
     } 
 }
 

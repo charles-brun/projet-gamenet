@@ -63,6 +63,7 @@ namespace GameNetServer
             while (PlayerOne.Health > 0 && PlayerTwo.Health > 0)
             {
                 Console.Clear();
+                Console.WriteLine();
                 Console.WriteLine(PlayerOne.ToString());
                 Console.WriteLine(PlayerTwo.ToString());
 
@@ -77,21 +78,14 @@ namespace GameNetServer
                     DisplayPlyr(PlayerTwo, plyrTwoName);
                 }
                 byte PlyrRoundType = 0;
-                Console.WriteLine("\n What Do you want to do?");
                 if (PlyrRound is Warrior) {
                     PlyrRoundType = 1;
-                    Console.WriteLine("1 : BaseAttack : 25 damage, if Bravery is active 15 supply damage");
-                    Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
                 }
                 if (PlyrRound is Cleric) {
                     PlyrRoundType = 2;
-                    Console.WriteLine("1 : BaseAttack : +15 hp");
-                    Console.WriteLine("2 : AlternatifAttack : You will inflict a demage equal to the half of your mana, but -80 of your mana");
                 }
                 if (PlyrRound is Paladin) {
                     PlyrRoundType = 3;
-                    Console.WriteLine("1 : BaseAttack : You will inflict damage equal to 25 + your buff, buff +3 (15 max)");
-                    Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
                 }
 
                 SendToPlyrCharInfo = new byte[]{5, PlyrOneTypeCharacter, (byte)PlayerOne.MaxHealth, (byte)PlayerOne.Health, (byte)PlayerOne.GetUniqueValue() , PlyrTwoTypeCharacter, (byte)PlayerTwo.MaxHealth, (byte)PlayerTwo.Health, (byte)PlayerTwo.GetUniqueValue()};
@@ -129,21 +123,20 @@ namespace GameNetServer
             }
             byte[] sendWinner = new byte[1];
             if (PlayerOne.Health == 0 && PlayerTwo.Health > 0) {
-                Console.WriteLine(plyrTwoName + " WIN!");
+                Console.WriteLine(plyrTwoName + " WINS !");
                 sendWinner[0] = 8;
             } else if(PlayerOne.Health > 0 && PlayerTwo.Health == 0) {
-                Console.WriteLine(plyrOneName + " WIN!");
+                Console.WriteLine(plyrOneName + " WINS !");
                 sendWinner[0] = 7;
             } else if (PlayerOne.Health == 0 && PlayerTwo.Health == 0) {
-                Console.WriteLine("DRAW!");
+                Console.WriteLine("DRAW !");
                 sendWinner[0] = 9;
             }
             server.clientSockets[0].SendTo(sendWinner, 0, sendWinner.Length, SocketFlags.None, server.clientSockets[0].LocalEndPoint);
             server.clientSockets[1].SendTo(sendWinner, 0, sendWinner.Length, SocketFlags.None, server.clientSockets[1].LocalEndPoint);
 
-            Console.WriteLine("Fini!");
+            Console.WriteLine("Game ended !");
             server.CloseAllSockets();
-
         }
 
         public static int PlyrMoveInput = -1;
@@ -151,15 +144,9 @@ namespace GameNetServer
         public static bool PlyrHasChoseMove = false;
 
         public static void PlyrChoseMove() {
-            Console.WriteLine("Your target?");
-            Console.WriteLine("1 : PlayerOne");
-            Console.WriteLine("2 : PlayerTwo");
-
-           
 
             if (round == 1) 
             {
-
                 if (PlyrMoveInput == 1) {
                     if (CibleMovePlyr == 1) {
                         PlayerOne.CibledSpecial(PlayerOne);
@@ -211,7 +198,6 @@ namespace GameNetServer
             else if(PlyrInput == "2") {
                 return 2;
             } else {
-                Console.WriteLine("Not valid input, try again");
                 return choiseOneOrTwo();
             }
         }
@@ -254,35 +240,7 @@ namespace GameNetServer
         }
 
         public static void DisplayPlyr(Character plyrToDisplay, string PlyrName) {
-            if (plyrToDisplay is Warrior) {
-                Console.WriteLine(PlyrName + '\n');
-                PrintWarrior();
-            } else if (plyrToDisplay is Cleric) {
-                Console.WriteLine(PlyrName + '\n');
-                PrintCleric();
-            } else if (plyrToDisplay is Paladin) {
-                Console.WriteLine(PlyrName + '\n');
-                PrintPaladin();
-            }
-        }
-
-        public static void PrintWarrior() {
-            for (int i = 0; i < shieldASCII.Length; i++)
-            {
-                Console.WriteLine(shieldASCII[i]);
-            }
-        }
-        public static void PrintCleric() {
-            for (int i = 0; i < mageASCII.Length; i++)
-            {
-                Console.WriteLine(mageASCII[i]);
-            }
-        }
-        public static void PrintPaladin() {
-            for (int i = 0; i < paladinASCII.Length; i++)
-            {
-                Console.WriteLine(paladinASCII[i]);
-            }
+            Console.WriteLine(PlyrName);
         }
     }
     

@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+
 namespace GameNetClient
 {
 
@@ -18,10 +20,10 @@ namespace GameNetClient
         public static string plyrTwoName = "";
         
 
-        public static void GameBegin () {
+        public static void GameBegin (string ip) {
             
             Console.Clear();
-            var client = new NetClient();
+            var client = new NetClient(ip);
             client.ConnectToServer();
 
 
@@ -171,6 +173,7 @@ namespace GameNetClient
         public static int PlyrGetAtkInput(byte TypeOfPlyrInput) {
 
             Console.Clear();
+            Console.WriteLine();
             Console.WriteLine(PlayerOne.ToString());
             Console.WriteLine(PlayerTwo.ToString());
         
@@ -190,8 +193,13 @@ namespace GameNetClient
 
         public static int CibleOfAtkInput() {
             Console.WriteLine("Your target?");
-            Console.WriteLine("1 : PlayerOne");
-            Console.WriteLine("2 : PlayerTwo");
+            if (PlyrId == 1){
+                Console.WriteLine("1 : YOU");
+                Console.WriteLine($"2 : {PlayerTwo.Name}");
+            } else {
+                Console.WriteLine($"1 : {PlayerOne.Name}");
+                Console.WriteLine("2 : YOU");
+            }
             return choiceOneOrTwo();
         }
 
@@ -215,7 +223,7 @@ namespace GameNetClient
             {
                 Console.WriteLine(shieldASCII[i] + mageASCII[i] + paladinASCII[i]);
             }
-            Console.WriteLine(PlyrName + " CHOOSE YOUR CHARACTER");
+            Console.WriteLine(PlyrName + "CHOOSE YOUR CHARACTER");
             Console.WriteLine("1 : Warrior");
             Console.WriteLine("2 : Cleric");
             Console.WriteLine("3 : Paladin");
@@ -243,14 +251,14 @@ namespace GameNetClient
 
         public static void DisplayPlyr(byte plyrToDisplay, string PlyrName) {
             if (plyrToDisplay == 1) {
-                Console.WriteLine(PlyrName + '\n');
                 PrintWarrior();
+                Console.WriteLine(PlyrName + '\n');
             } else if (plyrToDisplay == 2) {
-                Console.WriteLine(PlyrName + '\n');
                 PrintCleric();
-            } else if (plyrToDisplay == 3) {
                 Console.WriteLine(PlyrName + '\n');
+            } else if (plyrToDisplay == 3) {
                 PrintPaladin();
+                Console.WriteLine(PlyrName + '\n');
             }
         }
 
@@ -287,16 +295,16 @@ namespace GameNetClient
         public static void DisplayAtkChoiseOfCharacter(byte characterToUse) {
             Console.WriteLine("\n What Do you want to do?");
             if (characterToUse == 1) {
-                Console.WriteLine("1 : BaseAttack : 25 damage, if Bravery is active 15 supply damage");
-                Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
+                Console.WriteLine("1 : 25 damage, if Bravery is active 15 supply damage");
+                Console.WriteLine("2 : 50 dmg, but you take a backlash of 10 hp");
             }
             if (characterToUse == 2) {
-                Console.WriteLine("1 : BaseAttack : +15 hp");
-                Console.WriteLine("2 : AlternatifAttack : You will inflict a demage equal to the half of your mana, but -80 of your mana");
+                Console.WriteLine("1 : Heal +15 hp");
+                Console.WriteLine("2 : You will inflict dmg equal to the half of your mana, but -80 of your mana");
             }
             if (characterToUse == 3) {
-                Console.WriteLine("1 : BaseAttack : You will inflict damage equal to 25 + your buff, buff +3 (15 max)");
-                Console.WriteLine("2 : AlternatifAttack : 50 damge, but you take a backlash of 10 hp");
+                Console.WriteLine("1 : You will inflict damage equal to 25 + your buff, buff +3 (15 max)");
+                Console.WriteLine("2 : 50 dmg, but you take a backlash of 10 hp");
             }
         }
 

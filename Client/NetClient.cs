@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace GameNetClient {
     internal sealed class NetClient
@@ -21,7 +22,11 @@ namespace GameNetClient {
         public byte[] actionSent = new byte[1];
 
         public List<byte> ActionsQueue = new List<byte>();
+        public string ip = "127.0.0.0";
 
+        public NetClient(string pIp){
+            this.ip = pIp;
+        }
         public void ConnectToServer()
         {
             int attempts = 0;
@@ -31,7 +36,6 @@ namespace GameNetClient {
                 try
                 {
                     attempts++;
-                    string ip = "127.0.0.1";
                     Console.WriteLine("Connection attempt to " + ip + ":"  + Port + "...");
                     var address = IPAddress.Parse(ip);
                     clientSocket.Connect(address, Port);
@@ -124,10 +128,10 @@ namespace GameNetClient {
                 string text = Encoding.ASCII.GetString(data.Skip(1).Take(data.Length - 1).ToArray());
                 if (Game.plyrOneName == "") {
                     Game.plyrOneName = text;
-                    Console.WriteLine("Your enemy is : " + Game.plyrOneName);
+                    Console.WriteLine("Your ennemy is : " + Game.plyrOneName);
                 } else if (Game.plyrTwoName == "") {
                     Game.plyrTwoName = text;
-                    Console.WriteLine("Your enemy is : " + Game.plyrTwoName);
+                    Console.WriteLine("Your ennemy is : " + Game.plyrTwoName);
                 }
                 return;
             }
@@ -147,7 +151,7 @@ namespace GameNetClient {
                 Console.Write("\n");
                 Console.WriteLine(Game.PlayerOne.ToString());
                 Console.WriteLine(Game.PlayerTwo.ToString());
-                Console.WriteLine("Waiting for " + (myID == 1 ? Game.plyrTwoName : Game.plyrOneName) + " play ...");
+                Console.WriteLine("Waiting for " + (myID == 1 ? Game.plyrTwoName : Game.plyrOneName) + " to play ...");
                 return;
             }
 
@@ -194,15 +198,15 @@ namespace GameNetClient {
                 SendByte(new byte[]{PlyrChosen, (byte)myID});
             }
             if ( oneByte == Actions[ActionCodes.PlyrOneWinner]) {
-                Console.WriteLine(Game.plyrOneName + " WIN!");
+                Console.WriteLine(Game.plyrOneName + " WINS !");
                 Exit();
             }
             if ( oneByte == Actions[ActionCodes.PlyrTwoWinner]) {
-                Console.WriteLine(Game.plyrTwoName + " WIN!");
+                Console.WriteLine(Game.plyrTwoName + " WINS !");
                 Exit();
             }
             if ( oneByte == Actions[ActionCodes.DrawMatch]) {
-                Console.WriteLine("DRAW!");
+                Console.WriteLine("DRAW !");
                 Exit();
             }
         }

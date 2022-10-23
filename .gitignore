@@ -2,5 +2,4 @@ Client/bin/
 Client/obj/
 Server/bin/
 Server/obj/
-Game/bin/
-Game/obj/
+.vs/
